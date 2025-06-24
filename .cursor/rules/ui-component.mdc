@@ -1,0 +1,356 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Guidelines for building UI components with Shadcn UI, Tailwind CSS, and Next.js best practices
+globs: src/components/**/*.{tsx,ts}
+alwaysApply: false
+---
+# UI Component Development Guidelines
+
+This rule defines standards for building UI components in our Next.js project using Shadcn UI, Tailwind CSS, and modern web development best practices.
+
+## Component Structure
+
+1. **File Organization:**
+   - Place components in `src/components/`
+   - Use kebab-case for file names: `user-profile.tsx`
+   - Group related components in subdirectories: `src/components/forms/`
+
+2. **Component Structure:**
+   ```typescript
+   // 1. Imports (external libraries first, then internal)
+   import { useState } from 'react'
+   import Image from 'next/image'
+   import { User, Settings } from 'lucide-react'
+   
+   // 2. Types/Interfaces
+   interface UserProfileProps {
+     name: string
+     email: string
+     avatar?: string
+   }
+   
+   // 3. Component (default export)
+   export default function UserProfile({ name, email, avatar }: UserProfileProps) {
+     return (
+       <div className="p-4 bg-white rounded-lg shadow-sm">
+         {/* Component content */}
+       </div>
+     )
+   }
+   ```
+
+## Styling Guidelines
+
+### Shadcn UI Integration
+- Use Shadcn UI components as the foundation for all UI elements
+- Import from `@/components/ui/` for Shadcn components
+- Extend Shadcn components rather than creating from scratch
+
+```typescript
+// Good: Extending Shadcn components
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+export default function ProductCard({ product }: ProductCardProps) {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader>
+        <CardTitle className="text-lg">{product.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button variant="outline" size="sm">
+          View Details
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+### Tailwind CSS Best Practices
+- Use Tailwind utility classes for all styling
+- Follow mobile-first responsive design approach
+- Use semantic class names and avoid arbitrary values
+
+```typescript
+// Good: Mobile-first responsive design
+<div className="
+  p-4 
+  md:p-6 
+  lg:p-8
+  grid 
+  grid-cols-1 
+  sm:grid-cols-2 
+  lg:grid-cols-3 
+  gap-4 
+  md:gap-6
+">
+  {/* Content */}
+</div>
+
+// Bad: Desktop-first approach
+<div className="
+  p-8 
+  grid 
+  grid-cols-3 
+  gap-6
+  max-sm:p-4 
+  max-sm:grid-cols-1 
+  max-sm:gap-4
+">
+  {/* Content */}
+</div>
+```
+
+## Image Handling
+
+### Next.js Image Component
+- Always use `next/image` for all images
+- Provide proper `alt` text for accessibility
+- Use appropriate `width` and `height` props
+- Implement lazy loading for performance
+
+```typescript
+import Image from 'next/image'
+
+// Good: Proper image implementation
+<Image
+  src="/products/headphones.jpg"
+  alt="Wireless Bluetooth Headphones"
+  width={300}
+  height={200}
+  className="rounded-lg object-cover"
+  priority={false} // Use true for above-the-fold images
+/>
+
+// Good: Responsive images
+<div className="relative w-full h-48 sm:h-64 lg:h-80">
+  <Image
+    src="/hero-banner.jpg"
+    alt="Hero banner"
+    fill
+    className="object-cover rounded-lg"
+    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+  />
+</div>
+```
+
+## Icon Usage
+
+### Icon Priority Order
+1. **Custom icons in `/public/icons/`** (SVG files)
+2. **Lucide React icons** (import from `lucide-react`)
+
+```typescript
+// 1. Check for custom icons first
+import Image from 'next/image'
+
+// Custom icon from public/icons
+<Image
+  src="/icons/custom-logo.svg"
+  alt="Custom Logo"
+  width={24}
+  height={24}
+  className="w-6 h-6"
+/>
+
+// 2. Fallback to Lucide React icons
+import { ShoppingCart, User, Settings } from 'lucide-react'
+
+// Lucide React icons
+<button className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100">
+  <ShoppingCart className="w-5 h-5" />
+  <span>Cart</span>
+</button>
+```
+
+## Responsive Design Patterns
+
+### Mobile-First Approach
+- Start with mobile styles, then add breakpoint modifiers
+- Use Tailwind's responsive prefixes: `sm:`, `md:`, `lg:`, `xl:`, `2xl:`
+
+```typescript
+// Good: Mobile-first responsive component
+<div className="
+  flex flex-col 
+  sm:flex-row 
+  lg:flex-col 
+  xl:flex-row
+  space-y-4 
+  sm:space-y-0 
+  sm:space-x-4 
+  lg:space-x-0 
+  lg:space-y-4 
+  xl:space-y-0 
+  xl:space-x-4
+">
+  <div className="flex-1">
+    <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold">
+      Product Title
+    </h2>
+    <p className="text-sm sm:text-base text-gray-600 mt-2">
+      Product description
+    </p>
+  </div>
+  <div className="w-full sm:w-auto">
+    <Button className="w-full sm:w-auto">
+      Add to Cart
+    </Button>
+  </div>
+</div>
+```
+
+### Common Responsive Patterns
+```typescript
+// Grid layouts
+<div className="
+  grid 
+  grid-cols-1 
+  sm:grid-cols-2 
+  md:grid-cols-3 
+  lg:grid-cols-4 
+  gap-4 
+  md:gap-6
+">
+
+// Text sizing
+<h1 className="
+  text-2xl 
+  sm:text-3xl 
+  md:text-4xl 
+  lg:text-5xl 
+  font-bold
+">
+
+// Spacing
+<div className="
+  p-4 
+  sm:p-6 
+  md:p-8 
+  lg:p-10
+">
+```
+
+## Component Examples
+
+### Card Component
+```typescript
+import Image from 'next/image'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Star, ShoppingCart } from 'lucide-react'
+
+interface ProductCardProps {
+  product: {
+    id: string
+    name: string
+    price: number
+    image: string
+    rating: number
+  }
+  onAddToCart: (productId: string) => void
+}
+
+export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  return (
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
+      <div className="relative h-48 sm:h-56">
+        <Image
+          src={product.image}
+          alt={product.name}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        />
+      </div>
+      
+      <CardHeader className="p-4">
+        <CardTitle className="text-lg sm:text-xl line-clamp-2">
+          {product.name}
+        </CardTitle>
+        <div className="flex items-center space-x-1">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`w-4 h-4 ${
+                i < product.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+              }`}
+            />
+          ))}
+          <span className="text-sm text-gray-600 ml-2">
+            ({product.rating})
+          </span>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="p-4 pt-0">
+        <div className="flex items-center justify-between">
+          <span className="text-xl font-bold text-green-600">
+            ${product.price}
+          </span>
+          <Button
+            size="sm"
+            onClick={() => onAddToCart(product.id)}
+            className="flex items-center space-x-2"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span className="hidden sm:inline">Add to Cart</span>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+## Accessibility Guidelines
+
+1. **Semantic HTML:** Use proper HTML elements (`button`, `nav`, `main`, etc.)
+2. **ARIA Labels:** Add aria-labels for interactive elements
+3. **Keyboard Navigation:** Ensure all interactive elements are keyboard accessible
+4. **Color Contrast:** Use Tailwind's color palette which meets WCAG guidelines
+5. **Focus States:** Include visible focus indicators
+
+```typescript
+// Good: Accessible component
+<button
+  aria-label="Add item to cart"
+  className="
+    p-2 
+    rounded-md 
+    hover:bg-gray-100 
+    focus:outline-none 
+    focus:ring-2 
+    focus:ring-blue-500 
+    focus:ring-offset-2
+  "
+>
+  <ShoppingCart className="w-5 h-5" />
+</button>
+```
+
+## Performance Guidelines
+
+1. **Lazy Loading:** Use `priority={false}` for images below the fold
+2. **Component Splitting:** Use dynamic imports for large components
+3. **Optimized Images:** Use appropriate image formats and sizes
+4. **Minimal Re-renders:** Use React.memo for expensive components
+
+```typescript
+// Dynamic import for large components
+const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
+  loading: () => <div className="animate-pulse h-32 bg-gray-200 rounded" />
+})
+
+// Memoized component
+const ExpensiveComponent = React.memo(function ExpensiveComponent({ data }) {
+  return <div>{/* Expensive rendering logic */}</div>
+})
+```
+
+Follow these guidelines to create consistent, accessible, and performant UI components that work seamlessly across all devices and screen sizes.
