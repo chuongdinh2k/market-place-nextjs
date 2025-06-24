@@ -1,0 +1,561 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+---
+description: Form handling with React Hook Form and Zod validation
+globs: src/components/**/*.{tsx,ts}
+alwaysApply: false
+---
+# Form Handling with React Hook Form
+
+## Overview
+
+- Use **React Hook Form** with **Zod** for validation
+- Implement **server actions** with the same validation
+- Follow TypeScript-first approach with proper type safety
+- Use Shadcn UI form components for consistent styling
+
+## Dependencies
+
+```bash
+npm install react-hook-form @hookform/resolvers zod
+```
+
+## Basic Form Structure
+
+```tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+// 1. Define validation schema
+const formSchema = z.object({
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+// 2. Infer TypeScript type from schema
+type FormData = z.infer<typeof formSchema>;
+
+export function ExampleForm() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setError,
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      // Call server action
+      const result = await createUserAction(data);
+      
+      if (result.success) {
+        reset();
+        // Handle success
+      } else {
+        // Handle server errors
+        setError("root", { message: result.error });
+      }
+    } catch (error) {
+      setError("root", { message: "Something went wrong" });
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          {...register("email")}
+          aria-invalid={errors.email ? "true" : "false"}
+        />
+        {errors.email && (
+          <p className="text-sm text-red-500">{errors.email.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          {...register("password")}
+          aria-invalid={errors.password ? "true" : "false"}
+        />
+        {errors.password && (
+          <p className="text-sm text-red-500">{errors.password.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="confirmPassword">Confirm Password</Label>
+        <Input
+          id="confirmPassword"
+          type="password"
+          {...register("confirmPassword")}
+          aria-invalid={errors.confirmPassword ? "true" : "false"}
+        />
+        {errors.confirmPassword && (
+          <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+        )}
+      </div>
+
+      {errors.root && (
+        <p className="text-sm text-red-500">{errors.root.message}</p>
+      )}
+
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Creating..." : "Create Account"}
+      </Button>
+    </form>
+  );
+}
+```
+
+## Using Shadcn UI Form Components
+
+```tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+
+const formSchema = z.object({
+  username: z.string().min(2, "Username must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+});
+
+type FormData = z.infer<typeof formSchema>;
+
+export function ShadcnForm() {
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+    },
+  });
+
+  const onSubmit = async (data: FormData) => {
+    // Handle form submission
+    console.log(data);
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter username" {...field} />
+              </FormControl>
+              <FormDescription>
+                This is your public display name.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter email" type="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Submitting..." : "Submit"}
+        </Button>
+      </form>
+    </Form>
+  );
+}
+```
+
+## Advanced Form Patterns
+
+### Custom Form Components
+
+```tsx
+// components/ui/form-field.tsx
+import { forwardRef } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+
+interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  error?: string;
+  register: any;
+}
+
+export const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
+  ({ label, error, register, className, ...props }, ref) => {
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={props.id}>{label}</Label>
+        <Input
+          ref={ref}
+          className={cn(error && "border-red-500", className)}
+          aria-invalid={error ? "true" : "false"}
+          {...register}
+          {...props}
+        />
+        {error && (
+          <p className="text-sm text-red-500" role="alert">
+            {error}
+          </p>
+        )}
+      </div>
+    );
+  }
+);
+
+FormField.displayName = "FormField";
+```
+
+### Form with Custom Components
+
+```tsx
+import { FormField } from "@/components/ui/form-field";
+
+export function AdvancedForm() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    watch,
+  } = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+  });
+
+  const watchedPassword = watch("password");
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <FormField
+        label="Email"
+        type="email"
+        {...register("email")}
+        error={errors.email?.message}
+      />
+      
+      <FormField
+        label="Password"
+        type="password"
+        {...register("password")}
+        error={errors.password?.message}
+      />
+      
+      <FormField
+        label="Confirm Password"
+        type="password"
+        {...register("confirmPassword")}
+        error={errors.confirmPassword?.message}
+      />
+
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Creating..." : "Create Account"}
+      </Button>
+    </form>
+  );
+}
+```
+
+## Validation Patterns
+
+### Complex Validation Schemas
+
+```tsx
+import { z } from "zod";
+
+// User registration schema
+const userSchema = z.object({
+  firstName: z.string().min(2, "First name must be at least 2 characters"),
+  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number"),
+  confirmPassword: z.string(),
+  phone: z.string().optional(),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: "You must accept the terms and conditions",
+  }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+// Address schema
+const addressSchema = z.object({
+  street: z.string().min(1, "Street address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State is required"),
+  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid ZIP code format"),
+  country: z.string().min(1, "Country is required"),
+});
+
+// Combined schema
+const registrationSchema = z.object({
+  user: userSchema,
+  address: addressSchema,
+});
+```
+
+### Conditional Validation
+
+```tsx
+const conditionalSchema = z.object({
+  hasAddress: z.boolean(),
+  address: z.object({
+    street: z.string(),
+    city: z.string(),
+    zipCode: z.string(),
+  }).optional(),
+}).refine((data) => {
+  if (data.hasAddress) {
+    return data.address && data.address.street && data.address.city;
+  }
+  return true;
+}, {
+  message: "Address is required when 'Has Address' is checked",
+  path: ["address"],
+});
+```
+
+## Server Actions Integration
+
+### Server Action with Validation
+
+```tsx
+// app/actions/user.ts
+"use server";
+
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
+
+const userSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+export async function createUserAction(formData: FormData) {
+  try {
+    // Parse and validate form data
+    const rawData = Object.fromEntries(formData.entries());
+    const validatedData = userSchema.parse(rawData);
+
+    // Process the data
+    const user = await createUser(validatedData);
+    
+    revalidatePath("/users");
+    
+    return { success: true, data: user };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return { 
+        success: false, 
+        error: "Validation failed", 
+        details: error.errors 
+      };
+    }
+    
+    return { 
+      success: false, 
+      error: "Failed to create user" 
+    };
+  }
+}
+```
+
+### Form with Server Action
+
+```tsx
+import { createUserAction } from "@/app/actions/user";
+
+export function UserForm() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<FormData>({
+    resolver: zodResolver(userSchema),
+  });
+
+  const onSubmit = async (data: FormData) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
+
+    const result = await createUserAction(formData);
+
+    if (!result.success) {
+      if (result.details) {
+        // Handle validation errors
+        result.details.forEach((error) => {
+          setError(error.path[0] as keyof FormData, {
+            message: error.message,
+          });
+        });
+      } else {
+        setError("root", { message: result.error });
+      }
+    } else {
+      // Handle success
+      toast.success("User created successfully!");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Form fields */}
+    </form>
+  );
+}
+```
+
+## Form State Management
+
+### Loading States
+
+```tsx
+const {
+  register,
+  handleSubmit,
+  formState: { errors, isSubmitting, isDirty, isValid },
+  reset,
+} = useForm<FormData>({
+  resolver: zodResolver(schema),
+  mode: "onChange", // Validate on change
+});
+
+// Show different button states
+<Button 
+  type="submit" 
+  disabled={isSubmitting || !isValid || !isDirty}
+>
+  {isSubmitting ? (
+    <>
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      Creating...
+    </>
+  ) : (
+    "Create Account"
+  )}
+</Button>
+```
+
+### Form Reset and Default Values
+
+```tsx
+const {
+  register,
+  handleSubmit,
+  reset,
+  setValue,
+} = useForm<FormData>({
+  resolver: zodResolver(schema),
+  defaultValues: {
+    email: "",
+    firstName: "",
+    lastName: "",
+  },
+});
+
+// Reset form
+const handleReset = () => {
+  reset();
+};
+
+// Set specific values
+const handleSetDefaults = () => {
+  setValue("firstName", "John");
+  setValue("lastName", "Doe");
+};
+```
+
+## Best Practices
+
+### 1. Type Safety
+- Always use TypeScript with proper type inference
+- Define schemas first, then infer types
+- Use strict typing for form data
+
+### 2. Validation
+- Validate on both client and server
+- Use descriptive error messages
+- Implement real-time validation when needed
+
+### 3. Accessibility
+- Include proper labels and ARIA attributes
+- Show validation errors with `role="alert"`
+- Ensure keyboard navigation works
+
+### 4. Performance
+- Use `mode: "onChange"` sparingly
+- Debounce validation for search inputs
+- Memoize expensive validation logic
+
+### 5. Error Handling
+- Handle both client and server errors
+- Provide meaningful error messages
+- Implement proper error boundaries
+
+### 6. User Experience
+- Show loading states during submission
+- Disable form during submission
+- Provide clear success/error feedback
+- Implement form persistence if needed
+
+### 7. Component Structure
+- Use Shadcn UI form components when possible
+- Create reusable form field components
+- Keep form logic separate from UI components
+- Use proper form validation patterns
