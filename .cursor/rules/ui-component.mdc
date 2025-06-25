@@ -10,7 +10,7 @@ alwaysApply: false
 ---
 # UI Component Development Guidelines
 
-This rule defines standards for building UI components in our Next.js project using Shadcn UI, Tailwind CSS, and modern web development best practices.
+This rule defines standards for building UI components in our Next.js project using Shadcn UI, Tailwind CSS, and modern web development best practices. Just for build UI component, please dont add external logic.
 
 ## Component Structure
 

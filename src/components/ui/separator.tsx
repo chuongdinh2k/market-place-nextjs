@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as SeparatorPrimitive from "@radix-ui/react-separator";
 
-import { cn } from "@/utils";
+import { cn } from "@/lib/utils";
 
 const Separator = React.forwardRef<
   React.ElementRef<typeof SeparatorPrimitive.Root>,
@@ -19,7 +19,7 @@ const Separator = React.forwardRef<
       theme = "light",
       ...props
     },
-    ref,
+    ref
   ) => (
     <SeparatorPrimitive.Root
       ref={ref}
@@ -31,11 +31,11 @@ const Separator = React.forwardRef<
           : "bg-slate-200 dark:bg-slate-800",
         "shrink-0",
         orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
-        className,
+        className
       )}
       {...props}
     />
-  ),
+  )
 );
 Separator.displayName = SeparatorPrimitive.Root.displayName;
 
