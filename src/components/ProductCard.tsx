@@ -3,34 +3,31 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Product } from "@/hooks/use-products";
 
 interface ProductCardProps {
-  id: string;
-  name: string;
-  image: string;
-  price: number;
-  originalPrice?: number;
-  discountPercentage?: number;
-  rating: number;
-  reviewCount: number;
+  product: Product;
   onAddToCart?: (id: string) => void;
   onAddToWishlist?: (id: string) => void;
   onQuickView?: (id: string) => void;
 }
 
 export default function ProductCard({
-  id,
-  name,
-  image,
-  price,
-  originalPrice,
-  discountPercentage,
-  rating,
-  reviewCount,
+  product,
   onAddToCart,
   onAddToWishlist,
   onQuickView,
 }: ProductCardProps) {
+  const {
+    id,
+    name,
+    image,
+    price,
+    originalPrice,
+    discountPercentage,
+    rating = 0,
+    reviewCount = 0,
+  } = product;
   const [isHovered, setIsHovered] = useState(false);
 
   // Generate an array of 5 stars for the rating
@@ -119,12 +116,12 @@ export default function ProductCard({
         {/* Price */}
         <div className="flex gap-3">
           <span className="font-poppins font-medium text-base text-[#DB4444]">
-            ${price.toFixed(2)}
+            ${price}
           </span>
 
           {originalPrice && (
             <span className="font-poppins font-medium text-base text-black/50 line-through">
-              ${originalPrice.toFixed(2)}
+              ${originalPrice}
             </span>
           )}
         </div>

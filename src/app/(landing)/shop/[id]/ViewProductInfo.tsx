@@ -1,29 +1,58 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useCart } from "@/hooks/use-cart";
+import { useWishlist } from "@/hooks/use-wishlist";
 
-interface Product {
+interface ProductProps {
+  id: string;
   name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  discountPercentage?: number;
   rating: number;
   reviewCount: number;
-  inStock: boolean;
-  price: number;
-  description: string;
-  sizes: string[];
-  colors: {
-    name: string;
-    value: string;
-  }[];
+  stock: number;
 }
 
-export default function ViewProductInfo({ product }: { product: Product }) {
-  const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(0);
+export default function ViewProductInfo({
+  product,
+}: {
+  product: ProductProps;
+}) {
   const [quantity, setQuantity] = useState(1);
+  const cart = useCart();
+  const wishlist = useWishlist();
+
+  const inStock = product.stock > 0;
+
+  // Use optional chaining for all hook methods
+  const isInWishlist =
+    wishlist?.wishlistItems?.some((item) => item.productId === product.id) ||
+    false;
 
   const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity < 1) return;
+    if (product.stock && newQuantity > product.stock) return;
     setQuantity(newQuantity);
+  };
+
+  const handleAddToCart = async () => {
+    if (cart?.addToCart) {
+      await cart.addToCart(product.id, quantity);
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (isInWishlist && wishlist?.removeFromWishlist) {
+      await wishlist.removeFromWishlist(product.id);
+    } else if (wishlist?.addToWishlist) {
+      await wishlist.addToWishlist(product.id);
+    }
   };
 
   return (
@@ -38,7 +67,7 @@ export default function ViewProductInfo({ product }: { product: Product }) {
           {Array.from({ length: 5 }).map((_, index) => (
             <Image
               key={index}
-              src="/images/products/detail/star.svg"
+              src="/icons/star-icon.svg"
               alt="star"
               width={16}
               height={16}
@@ -54,16 +83,30 @@ export default function ViewProductInfo({ product }: { product: Product }) {
         <Separator orientation="vertical" className="h-3 sm:h-4" />
         <span
           className={`text-xs sm:text-sm font-poppins ${
-            product.inStock ? "text-green-500/60" : "text-red-500/60"
+            inStock ? "text-green-500/60" : "text-red-500/60"
           }`}
         >
-          {product.inStock ? "In Stock" : "Out of Stock"}
+          {inStock ? "In Stock" : "Out of Stock"}
         </span>
       </div>
 
       {/* Price */}
-      <div className="font-inter text-xl sm:text-2xl tracking-[0.03em] text-black">
-        ${product.price.toFixed(2)}
+      <div className="flex items-center gap-3">
+        <span className="font-inter text-xl sm:text-2xl tracking-[0.03em] text-[#DB4444]">
+          ${product.price.toFixed(2)}
+        </span>
+
+        {product.originalPrice && (
+          <span className="font-inter text-lg sm:text-xl tracking-[0.03em] text-black/50 line-through">
+            ${product.originalPrice.toFixed(2)}
+          </span>
+        )}
+
+        {product.discountPercentage && (
+          <span className="bg-[#DB4444] text-white py-1 px-3 rounded-md text-xs font-poppins">
+            -{product.discountPercentage}%
+          </span>
+        )}
       </div>
 
       {/* Description */}
@@ -73,55 +116,11 @@ export default function ViewProductInfo({ product }: { product: Product }) {
 
       <Separator className="my-4 sm:my-6" />
 
-      {/* Color Selection */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-        <span className="font-inter text-base sm:text-xl text-black">
-          Colours:
-        </span>
-        <div className="flex gap-3 sm:gap-4">
-          {product.colors.map((color, index) => (
-            <button
-              key={index}
-              className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full relative ${
-                selectedColor === index ? "ring-1 ring-offset-2 ring-black" : ""
-              }`}
-              style={{ backgroundColor: color.value }}
-              onClick={() => setSelectedColor(index)}
-              aria-label={`Select ${color.name} color`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Size Selection */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-        <span className="font-inter text-base sm:text-xl text-black">
-          Size:
-        </span>
-        <div className="flex gap-3 sm:gap-4">
-          {product.sizes?.map((size: string, index: number) => (
-            <button
-              key={index}
-              className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center border rounded-md text-xs sm:text-sm ${
-                selectedSize === index
-                  ? "bg-[#DB4444] text-white border-[#DB4444]"
-                  : "border-black/50 text-black"
-              }`}
-              onClick={() => setSelectedSize(index)}
-            >
-              {size}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <Separator className="my-4 sm:my-6" />
-
       {/* Quantity and Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         {/* Quantity Selector */}
         <div className="flex h-10 sm:h-11 border border-black/50 rounded-md overflow-hidden">
-          <button
+          <Button
             className="w-8 sm:w-10 flex items-center justify-center border-r border-black/50"
             onClick={() => handleQuantityChange(quantity - 1)}
             disabled={quantity <= 1}
@@ -133,13 +132,14 @@ export default function ViewProductInfo({ product }: { product: Product }) {
               height={2}
               className="sm:w-4 sm:h-0.5"
             />
-          </button>
+          </Button>
           <div className="w-16 sm:w-20 flex items-center justify-center font-poppins font-medium text-lg sm:text-xl text-black">
             {quantity}
           </div>
-          <button
+          <Button
             className="w-8 sm:w-10 flex items-center justify-center border-l border-black/50 bg-[#DB4444]"
             onClick={() => handleQuantityChange(quantity + 1)}
+            disabled={!!(product.stock && quantity >= product.stock)}
           >
             <Image
               src="/images/products/detail/plus.svg"
@@ -148,27 +148,37 @@ export default function ViewProductInfo({ product }: { product: Product }) {
               height={12}
               className="invert sm:w-4 sm:h-4"
             />
-          </button>
+          </Button>
         </div>
 
         {/* Buy Now Button */}
-        <Button className="bg-[#DB4444] hover:bg-[#DB4444]/90 text-white px-8 sm:px-12 h-10 sm:h-11 text-sm sm:text-base w-full sm:w-auto">
-          Buy Now
+        <Button
+          className="bg-[#DB4444] hover:bg-[#DB4444]/90 text-white px-8 sm:px-12 h-10 sm:h-11 text-sm sm:text-base w-full sm:w-auto"
+          onClick={handleAddToCart}
+          disabled={cart?.isAddingToCart || !inStock}
+        >
+          {cart?.isAddingToCart ? "Adding..." : "Add to Cart"}
         </Button>
 
         {/* Wishlist Button */}
-        <button className="w-10 h-10 border border-black/50 rounded-md flex items-center justify-center">
+        <button
+          className={`w-10 h-10 border rounded-md flex items-center justify-center ${
+            isInWishlist ? "bg-[#DB4444] border-[#DB4444]" : "border-black/50"
+          }`}
+          onClick={handleWishlistToggle}
+          disabled={wishlist?.isAddingToWishlist}
+        >
           <Image
             src="/images/products/detail/wishlist.svg"
-            alt="Add to wishlist"
+            alt={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
             width={16}
             height={14}
-            className="sm:w-5 sm:h-4"
+            className={`sm:w-5 sm:h-4 ${isInWishlist ? "invert" : ""}`}
           />
         </button>
       </div>
 
-      {/* Delivery and Returns */}
+      {/* Delivery Info */}
       <div className="mt-6 sm:mt-8 border border-black/50 rounded-md p-3 sm:p-4 space-y-4 sm:space-y-6">
         {/* Free Delivery */}
         <div className="flex gap-3 sm:gap-4">
@@ -249,28 +259,14 @@ export default function ViewProductInfo({ product }: { product: Product }) {
               className="sm:w-10 sm:h-10"
             >
               <path
-                d="M33.3334 18.3335C32.9258 15.9562 31.8222 13.7581 30.1664 11.9895C28.5105 10.2209 26.3787 8.96057 24.0001 8.36498C21.6216 7.76939 19.1231 7.86639 16.8085 8.64235C14.4939 9.41832 12.4653 10.8345 11 12.7168"
+                d="M33.3333 18.3335C33.3333 26.6668 20 33.3335 20 33.3335C20 33.3335 6.66666 26.6668 6.66666 18.3335C6.66666 14.6975 8.10564 11.2108 10.6561 8.66032C13.2066 6.10983 16.6933 4.67085 20.3293 4.67085C23.9653 4.67085 27.452 6.10983 30.0025 8.66032C32.553 11.2108 33.992 14.6975 33.992 18.3335H33.3333Z"
                 stroke="black"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
               <path
-                d="M6.66669 16.6665H16.6667V6.6665"
-                stroke="black"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M6.66669 21.6665C7.07426 24.0438 8.17786 26.2419 9.83369 28.0105C11.4895 29.7791 13.6213 31.0394 15.9999 31.635C18.3784 32.2306 20.8769 32.1336 23.1915 31.3576C25.5061 30.5817 27.5347 29.1655 29 27.2832"
-                stroke="black"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M33.3334 23.3335H23.3334V33.3335"
+                d="M20 23.3335C22.7614 23.3335 25 21.0949 25 18.3335C25 15.5721 22.7614 13.3335 20 13.3335C17.2386 13.3335 15 15.5721 15 18.3335C15 21.0949 17.2386 23.3335 20 23.3335Z"
                 stroke="black"
                 strokeWidth="2"
                 strokeLinecap="round"

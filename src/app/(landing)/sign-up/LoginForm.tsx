@@ -1,148 +1,126 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-
-// Define validation schema for basic client-side validation
-interface LoginFormData {
-  name: string;
-  emailOrPhone: string;
-  password: string;
-}
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useFormError } from "@/hooks/use-form-error";
+import { ErrorMessage } from "@/components/ui/error-message";
 
 export default function LoginForm() {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setError,
-  } = useForm<LoginFormData>({
-    defaultValues: {
-      name: "",
-      emailOrPhone: "",
-      password: "",
-    },
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { addError, clearErrors, hasError, getFieldError, getGeneralErrors } =
+    useFormError();
+  const router = useRouter();
 
-  const onSubmit = async (data: LoginFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearErrors();
+
+    // Validate form
+    if (!email) {
+      addError("Email is required", "email");
+      return;
+    }
+
+    if (!password) {
+      addError("Password is required", "password");
+      return;
+    }
+
     try {
-      // Here you would typically call a server action or API
-      console.log("Form submitted:", data);
+      setIsLoading(true);
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Handle successful login
-      // Redirect or show success message
-    } catch (error) {
-      // Log the error and set a generic error message
-      console.error("Login error:", error);
-      setError("root", {
-        message: "Failed to login. Please try again.",
+      // Call your authentication API
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        addError(data.error || "Login failed");
+        return;
+      }
+
+      // Redirect on successful login
+      router.push("/dashboard");
+    } catch (error) {
+      addError(
+        error instanceof Error ? error.message : "An unexpected error occurred"
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-[370px]">
-      {/* Form Header */}
-      <div className="mb-12">
-        <h1 className="font-inter text-[36px] text-black font-medium leading-[30px] tracking-[0.04em] mb-6">
-          Log in to Exclusive
-        </h1>
-        <p className="font-poppins text-black text-base">
-          Enter your details below
+    <div className="mx-auto w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-sm">
+      <div className="space-y-2 text-center">
+        <h1 className="text-3xl font-bold">Login</h1>
+        <p className="text-gray-500">
+          Enter your credentials to access your account
         </p>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
-        {/* Name Field */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Display general errors */}
+        {getGeneralErrors().map((error, index) => (
+          <ErrorMessage key={index} message={error.message} className="mb-2" />
+        ))}
+
         <div className="space-y-2">
-          <input
-            type="text"
-            placeholder="Name"
-            className={`w-full bg-transparent border-b border-black/50 pb-2 font-poppins text-base placeholder:text-black/40 focus:outline-none ${
-              errors.name ? "border-red-500" : "text-black"
-            }`}
-            {...register("name", { required: "Name is required" })}
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="name@example.com"
+            value={email}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setEmail(e.target.value)
+            }
+            className={hasError("email") ? "border-red-500" : ""}
           />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message}</p>
+          {getFieldError("email") && (
+            <ErrorMessage message={getFieldError("email") || ""} />
           )}
         </div>
 
-        {/* Email/Phone Field */}
         <div className="space-y-2">
-          <input
-            type="text"
-            placeholder="Email or Phone Number"
-            className={`w-full bg-transparent border-b border-black/50 pb-2 font-poppins text-base placeholder:text-black/40 focus:outline-none ${
-              errors.emailOrPhone ? "border-red-500" : "text-black"
-            }`}
-            {...register("emailOrPhone", {
-              required: "Email or phone number is required",
-            })}
-          />
-          {errors.emailOrPhone && (
-            <p className="text-sm text-red-500">
-              {errors.emailOrPhone.message}
-            </p>
-          )}
-        </div>
-
-        {/* Password Field */}
-        <div className="space-y-2">
-          <input
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
             type="password"
-            placeholder="Password"
-            className={`w-full bg-transparent border-b border-black/50 pb-2 font-poppins text-base placeholder:text-black/40 focus:outline-none ${
-              errors.password ? "border-red-500" : "text-black"
-            }`}
-            {...register("password", {
-              required: "Password is required",
-              minLength: {
-                value: 6,
-                message: "Password must be at least 6 characters",
-              },
-            })}
+            placeholder="••••••••"
+            value={password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setPassword(e.target.value)
+            }
+            className={hasError("password") ? "border-red-500" : ""}
           />
-          {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
+          {getFieldError("password") && (
+            <ErrorMessage message={getFieldError("password") || ""} />
           )}
         </div>
 
-        {/* Root Error */}
-        {errors.root && (
-          <p className="text-sm text-red-500">{errors.root.message}</p>
-        )}
-
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-[#DB4444] hover:bg-[#c13e3e] text-white font-poppins font-medium py-4"
-        >
-          {isSubmitting ? "Logging in..." : "Log in"}
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
-
-        {/* Login Link */}
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <span className="font-poppins text-base text-black/70">
-            Don&apos;t have an account?
-          </span>
-          <div className="flex flex-col items-center">
-            <Link
-              href="/sign-up"
-              className="font-poppins font-medium text-base text-black/70 hover:text-black"
-            >
-              Sign up
-            </Link>
-            <div className="h-[1px] w-full bg-black/50" />
-          </div>
-        </div>
       </form>
+
+      <div className="mt-4 text-center text-sm">
+        <p>
+          Don&apos;t have an account?{" "}
+          <a href="/sign-up" className="text-blue-600 hover:underline">
+            Sign up
+          </a>
+        </p>
+      </div>
     </div>
   );
 }
