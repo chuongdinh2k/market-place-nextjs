@@ -9,6 +9,7 @@ import { ErrorMessage } from "./ui/error-message";
 import { ErrorBoundary } from "./error-boundary";
 import { useWishlist } from "@/hooks/use-wishlist";
 import { useCart } from "@/hooks/use-cart";
+import { useToast } from "./providers/ToastProvider";
 
 export default function ProductList() {
   return (
@@ -22,6 +23,7 @@ function ProductListContent() {
   const { products, isLoading, hasError, error, mutate } = useProducts();
   const { addToWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const { notify } = useToast();
   const router = useRouter();
 
   const onQuickView = (id: string) => {
@@ -31,11 +33,19 @@ function ProductListContent() {
   const onAddToWishlist = (id: string) => {
     addToWishlist(id);
     mutate();
+    notify({
+      title: "Product added to wishlist",
+      description: "You can view it in your wishlist",
+    });
   };
 
   const onAddToCart = (id: string) => {
     addToCart(id);
     mutate();
+    notify({
+      title: "Product added to cart",
+      description: "You can view it in your cart",
+    });
   };
 
   // Handle loading state

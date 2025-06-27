@@ -167,7 +167,7 @@ export default function ViewProductInfo({
             isInWishlist ? "bg-[#DB4444] border-[#DB4444]" : "border-black/50"
           }`}
           onClick={handleWishlistToggle}
-          disabled={wishlist?.isAddingToWishlist}
+          disabled={wishlist?.isLoading}
         >
           <Image
             src="/images/products/detail/wishlist.svg"

@@ -1,5 +1,6 @@
 import Footer from "./Footer";
 import Header from "./Header";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 
 export default function BasicLayout({
   children,
@@ -7,10 +8,12 @@ export default function BasicLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Header />
-      <main className="container mx-auto px-4 py-8">{children}</main>
-      <Footer />
-    </div>
+    <ToastProvider>
+      <div className="min-h-screen flex flex-col bg-white">
+        <Header />
+        <main className="container mx-auto px-4 py-8">{children}</main>
+        <Footer />
+      </div>
+    </ToastProvider>
   );
 }
