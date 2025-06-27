@@ -7,6 +7,7 @@ import { Skeleton } from "./ui/skeleton";
 import { useRouter } from "next/navigation";
 import { ErrorMessage } from "./ui/error-message";
 import { ErrorBoundary } from "./error-boundary";
+import { useWishlist } from "@/hooks/use-wishlist";
 
 export default function ProductList() {
   return (
@@ -18,10 +19,16 @@ export default function ProductList() {
 
 function ProductListContent() {
   const { products, isLoading, hasError, error, mutate } = useProducts();
+  const { addToWishlist } = useWishlist();
   const router = useRouter();
 
   const onQuickView = (id: string) => {
     router.push(`/shop/${id}`);
+  };
+
+  const onAddToWishlist = (id: string) => {
+    addToWishlist(id);
+    mutate();
   };
 
   // Handle loading state
@@ -74,6 +81,7 @@ function ProductListContent() {
           key={product.id}
           product={product}
           onQuickView={onQuickView}
+          onAddToWishlist={onAddToWishlist}
         />
       ))}
     </div>

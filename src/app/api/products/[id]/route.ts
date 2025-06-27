@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/utils/api-error";
+import { serializeProduct } from "@/lib/utils/serialize-product";
 
 interface Params {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export async function GET(request: Request, { params }: Params) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       throw new ApiError("Product ID is required", 400);
@@ -42,7 +41,16 @@ export async function GET(request: Request, { params }: Params) {
       throw new ApiError("Product not found", 404);
     }
 
-    return NextResponse.json(product);
+    // Convert Decimal objects to numbers for serialization
+    const serializedProduct = {
+      ...product,
+      price: Number(product.price),
+      originalPrice: product.originalPrice
+        ? Number(product.originalPrice)
+        : null,
+    };
+
+    return NextResponse.json(serializedProduct);
   } catch (error) {
     return handleApiError(error);
   }
@@ -50,7 +58,7 @@ export async function GET(request: Request, { params }: Params) {
 
 export async function PUT(request: Request, { params }: Params) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     if (!id) {
@@ -89,7 +97,7 @@ export async function PUT(request: Request, { params }: Params) {
       },
     });
 
-    return NextResponse.json(updatedProduct);
+    return NextResponse.json(serializeProduct(updatedProduct));
   } catch (error) {
     return handleApiError(error);
   }
@@ -97,7 +105,7 @@ export async function PUT(request: Request, { params }: Params) {
 
 export async function DELETE(request: Request, { params }: Params) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       throw new ApiError("Product ID is required", 400);

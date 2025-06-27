@@ -1,8 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils/fetcher";
+import {
+  login as loginAction,
+  register as registerAction,
+  logout as logoutAction,
+} from "@/actions/auth";
+import type { LoginFormData, RegisterFormData } from "@/actions/auth";
 
 export interface User {
   id: string;
@@ -15,6 +22,7 @@ export function useAuth() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
 
   const {
     data: user,
@@ -32,25 +40,17 @@ export function useAuth() {
   const isAdmin = user?.role === "ADMIN";
 
   // Login function
-  const login = async (email: string, password: string) => {
+  const login = async ({ email, password }: LoginFormData) => {
     try {
       setIsLoggingIn(true);
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const result = await loginAction({ email, password });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Login failed");
+      if (result.success) {
+        await mutate();
+        router.refresh();
       }
 
-      // Revalidate user data
-      await mutate();
-      return { success: true };
+      return result;
     } catch (error) {
       console.error("Login error:", error);
       return {
@@ -63,25 +63,17 @@ export function useAuth() {
   };
 
   // Register function
-  const register = async (name: string, email: string, password: string) => {
+  const register = async ({ name, email, password }: RegisterFormData) => {
     try {
       setIsRegistering(true);
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
+      const result = await registerAction({ name, email, password });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Registration failed");
+      if (result.success) {
+        await mutate();
+        router.refresh();
       }
 
-      // Revalidate user data
-      await mutate();
-      return { success: true };
+      return result;
     } catch (error) {
       console.error("Registration error:", error);
       return {
@@ -97,16 +89,9 @@ export function useAuth() {
   const logout = async () => {
     try {
       setIsLoggingOut(true);
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
-
-      // Set user to null
+      await logoutAction();
       await mutate(null, false);
+      router.refresh();
       return true;
     } catch (error) {
       console.error("Logout error:", error);

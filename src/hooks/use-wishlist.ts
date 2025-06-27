@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import useSWR from "swr";
-import { fetcher } from "@/lib/utils/fetcher";
+import {
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
+} from "@/actions/wishlist";
+import { useAuth } from "@/hooks/use-auth"; // Assuming you have a way to get userId
 import { Product } from "./use-products";
 
 export interface WishlistItem {
@@ -12,81 +16,57 @@ export interface WishlistItem {
 }
 
 export function useWishlist() {
-  const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
-  const [isRemovingFromWishlist, setIsRemovingFromWishlist] = useState(false);
+  const { user } = useAuth(); // Get userId from auth context/session
+
+  // SWR fetcher using server action
+  const fetchWishlist = async () => {
+    if (!user?.id) return [];
+    const result = await getWishlist(user.id);
+    if (result.success) return result.data;
+    throw new Error(result.error);
+  };
 
   const {
     data: wishlistItems,
     error,
     isLoading,
     mutate,
-  } = useSWR<WishlistItem[]>("/api/wishlist", fetcher);
+  } = useSWR(user?.id ? ["wishlist", user.id] : null, fetchWishlist);
 
   // Add item to wishlist
-  const addToWishlist = async (productId: string) => {
-    try {
-      setIsAddingToWishlist(true);
-      const response = await fetch("/api/wishlist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ productId }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to add item to wishlist");
-      }
-
-      // Revalidate wishlist data
+  const handleAddToWishlist = async (productId: string) => {
+    console.log("productId", productId);
+    if (!user?.id) return false;
+    const result = await addToWishlist(productId, user.id);
+    if (result.success) {
       await mutate();
       return true;
-    } catch (error) {
-      console.error("Error adding to wishlist:", error);
-      return false;
-    } finally {
-      setIsAddingToWishlist(false);
     }
+    return false;
   };
 
   // Remove item from wishlist
-  const removeFromWishlist = async (itemId: string) => {
-    try {
-      setIsRemovingFromWishlist(true);
-      const response = await fetch(`/api/wishlist/${itemId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to remove item from wishlist");
-      }
-
-      // Revalidate wishlist data
+  const handleRemoveFromWishlist = async (productId: string) => {
+    if (!user?.id) return false;
+    const result = await removeFromWishlist(productId, user.id);
+    if (result.success) {
       await mutate();
       return true;
-    } catch (error) {
-      console.error("Error removing from wishlist:", error);
-      return false;
-    } finally {
-      setIsRemovingFromWishlist(false);
     }
+    return false;
   };
 
-  // Check if product is in wishlist
-  const isInWishlist = (productId: string) => {
-    return wishlistItems?.some((item) => item.productId === productId) ?? false;
-  };
+  const isInWishlist = (productId: string) =>
+    wishlistItems?.some((item) => item.productId === productId) ?? false;
 
   return {
     wishlistItems,
     isLoading,
     hasError: !!error,
-    isAddingToWishlist,
-    isRemovingFromWishlist,
-    totalItems: wishlistItems?.length ?? 0,
-    addToWishlist,
-    removeFromWishlist,
+    addToWishlist: handleAddToWishlist,
+    removeFromWishlist: handleRemoveFromWishlist,
     isInWishlist,
     mutate,
+    error,
   };
 }

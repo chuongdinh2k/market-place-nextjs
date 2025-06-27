@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ApiError, handleApiError } from "@/lib/utils/api-error";
+import {
+  serializeProducts,
+  serializeProduct,
+} from "@/lib/utils/serialize-product";
 
 export async function GET() {
   try {
@@ -29,7 +33,7 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(products);
+    return NextResponse.json(serializeProducts(products));
   } catch (error) {
     return handleApiError(error);
   }
@@ -68,7 +72,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json(serializeProduct(product), { status: 201 });
   } catch (error) {
     return handleApiError(error);
   }

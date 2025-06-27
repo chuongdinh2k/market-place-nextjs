@@ -12,12 +12,24 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { Menu, User, LogOut } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { useWishlist } from "@/hooks/use-wishlist";
 
 export default function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-
+  const { user, isAuthenticated, logout } = useAuth();
+  const { wishlistItems } = useWishlist();
   const isActive = (path: string) => pathname === path;
 
   const navItems = [
@@ -25,8 +37,22 @@ export default function Header() {
     { name: "Contact", path: "/contact" },
     { name: "Shop", path: "/shop" },
     { name: "About", path: "/about" },
-    { name: "Sign Up", path: "/sign-up" },
   ];
+
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  // Get user initials for avatar
+  const getInitials = () => {
+    if (!user?.name) return "U";
+    return user.name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   return (
     <header className="sticky top-0 z-30 w-full border-b bg-white">
@@ -86,14 +112,25 @@ export default function Header() {
           {/* Wishlist Icon */}
           <Link
             href="/wishlist"
-            className="hidden md:flex items-center justify-center w-8 h-8"
+            className="hidden md:flex items-center justify-center w-8 h-8 relative"
           >
-            <Image
-              src="/icons/wishlist-icon.svg"
-              alt="Wishlist"
-              width={20}
-              height={18}
-            />
+            <div className="relative">
+              <Image
+                src="/icons/wishlist-icon.svg"
+                alt="Wishlist"
+                width={20}
+                height={18}
+              />
+              {/* Wishlist Badge */}
+              {wishlistItems && wishlistItems?.length > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
+                >
+                  {wishlistItems?.length}
+                </Badge>
+              )}
+            </div>
           </Link>
 
           {/* Cart Icon */}
@@ -108,8 +145,71 @@ export default function Header() {
                 width={23}
                 height={17}
               />
+              {/* Cart Badge */}
+              <Badge
+                variant="destructive"
+                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
+              >
+                3
+              </Badge>
             </div>
           </Link>
+
+          {/* User Menu */}
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{getInitials()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    {user?.name && <p className="font-medium">{user.name}</p>}
+                    {user?.email && (
+                      <p className="w-[200px] truncate text-sm text-muted-foreground">
+                        {user.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                {user?.role === "ADMIN" && (
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard">
+                      <span>Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onSelect={handleLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link href="/sign-up">
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
+            </Link>
+          )}
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
@@ -160,34 +260,92 @@ export default function Header() {
                         {item.name}
                       </Link>
                     ))}
+
+                    {!isAuthenticated && (
+                      <Link
+                        href="/sign-up"
+                        className="text-[16px] font-poppins"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Sign In
+                      </Link>
+                    )}
+
+                    {isAuthenticated && (
+                      <>
+                        <Link
+                          href="/profile"
+                          className="text-[16px] font-poppins"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Profile
+                        </Link>
+                        {user?.role === "ADMIN" && (
+                          <Link
+                            href="/dashboard"
+                            className="text-[16px] font-poppins"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            Dashboard
+                          </Link>
+                        )}
+                        <button
+                          onClick={async () => {
+                            await logout();
+                            setIsOpen(false);
+                          }}
+                          className="text-[16px] font-poppins text-left text-red-500"
+                        >
+                          Log out
+                        </button>
+                      </>
+                    )}
                   </nav>
 
                   <div className="flex gap-6 mt-4">
                     <Link
                       href="/wishlist"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 relative"
                       onClick={() => setIsOpen(false)}
                     >
-                      <Image
-                        src="/icons/wishlist-icon.svg"
-                        alt="Wishlist"
-                        width={20}
-                        height={18}
-                      />
+                      <div className="relative">
+                        <Image
+                          src="/icons/wishlist-icon.svg"
+                          alt="Wishlist"
+                          width={20}
+                          height={18}
+                        />
+                        {/* Wishlist Badge for Mobile */}
+                        <Badge
+                          variant="secondary"
+                          className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
+                        >
+                          5
+                        </Badge>
+                      </div>
                       <span className="text-[16px] font-poppins">Wishlist</span>
                     </Link>
 
                     <Link
                       href="/cart"
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 relative"
                       onClick={() => setIsOpen(false)}
                     >
-                      <Image
-                        src="/icons/cart-icon.svg"
-                        alt="Cart"
-                        width={23}
-                        height={17}
-                      />
+                      <div className="relative">
+                        <Image
+                          src="/icons/cart-icon.svg"
+                          alt="Cart"
+                          width={23}
+                          height={17}
+                        />
+                        {/* Cart Badge for Mobile */}
+                        <Badge
+                          variant="destructive"
+                          className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
+                        >
+                          3
+                        </Badge>
+                      </div>
                       <span className="text-[16px] font-poppins">Cart</span>
                     </Link>
                   </div>

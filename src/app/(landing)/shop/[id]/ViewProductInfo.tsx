@@ -48,6 +48,7 @@ export default function ViewProductInfo({
   };
 
   const handleWishlistToggle = async () => {
+    console.log("runhere", isInWishlist);
     if (isInWishlist && wishlist?.removeFromWishlist) {
       await wishlist.removeFromWishlist(product.id);
     } else if (wishlist?.addToWishlist) {
@@ -93,12 +94,12 @@ export default function ViewProductInfo({
       {/* Price */}
       <div className="flex items-center gap-3">
         <span className="font-inter text-xl sm:text-2xl tracking-[0.03em] text-[#DB4444]">
-          ${product.price.toFixed(2)}
+          ${product.price}
         </span>
 
         {product.originalPrice && (
           <span className="font-inter text-lg sm:text-xl tracking-[0.03em] text-black/50 line-through">
-            ${product.originalPrice.toFixed(2)}
+            ${product.originalPrice}
           </span>
         )}
 

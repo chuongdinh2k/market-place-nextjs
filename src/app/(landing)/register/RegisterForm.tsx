@@ -1,29 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFormError } from "@/hooks/use-form-error";
 import { ErrorMessage } from "@/components/ui/error-message";
-import { login } from "@/actions/auth";
+import { register } from "@/actions/auth";
 
-export default function LoginForm() {
+export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const { addError, clearErrors, hasError, getFieldError, getGeneralErrors } =
     useFormError();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
 
     // Validate form
+    if (!name) {
+      addError("Name is required", "name");
+      return;
+    }
+
     if (!email) {
       addError("Email is required", "email");
       return;
@@ -34,19 +39,29 @@ export default function LoginForm() {
       return;
     }
 
+    if (password.length < 6) {
+      addError("Password must be at least 6 characters", "password");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      addError("Passwords do not match", "confirmPassword");
+      return;
+    }
+
     try {
       setIsLoading(true);
 
-      // Call the login server action
-      const result = await login({ email, password });
+      // Call the register server action
+      const result = await register({ name, email, password });
 
       if (!result.success) {
-        addError(result.error || "Login failed");
+        addError(result.error || "Registration failed");
         return;
       }
 
-      // Redirect on successful login
-      router.push(callbackUrl);
+      // Redirect on successful registration
+      router.push("/");
       router.refresh(); // Refresh the page to update the UI
     } catch (error) {
       addError(
@@ -60,9 +75,9 @@ export default function LoginForm() {
   return (
     <div className="mx-auto w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-sm">
       <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold text-black">Login</h1>
+        <h1 className="text-3xl font-bold">Create an Account</h1>
         <p className="text-gray-500">
-          Enter your credentials to access your account
+          Enter your details to create your account
         </p>
       </div>
 
@@ -73,9 +88,24 @@ export default function LoginForm() {
         ))}
 
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-black">
-            Email
-          </Label>
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            type="text"
+            placeholder="John Doe"
+            value={name}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setName(e.target.value)
+            }
+            className={hasError("name") ? "border-red-500" : ""}
+          />
+          {getFieldError("name") && (
+            <ErrorMessage message={getFieldError("name") || ""} />
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
@@ -92,9 +122,7 @@ export default function LoginForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password" className="text-black">
-            Password
-          </Label>
+          <Label htmlFor="password">Password</Label>
           <Input
             id="password"
             type="password"
@@ -110,16 +138,33 @@ export default function LoginForm() {
           )}
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm Password</Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setConfirmPassword(e.target.value)
+            }
+            className={hasError("confirmPassword") ? "border-red-500" : ""}
+          />
+          {getFieldError("confirmPassword") && (
+            <ErrorMessage message={getFieldError("confirmPassword") || ""} />
+          )}
+        </div>
+
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Logging in..." : "Login"}
+          {isLoading ? "Creating Account..." : "Register"}
         </Button>
       </form>
 
       <div className="mt-4 text-center text-sm">
         <p>
-          Don&apos;t have an account?{" "}
-          <a href="/register" className="text-blue-600 hover:underline">
-            Sign up
+          Already have an account?{" "}
+          <a href="/sign-up" className="text-blue-600 hover:underline">
+            Sign in
           </a>
         </p>
       </div>

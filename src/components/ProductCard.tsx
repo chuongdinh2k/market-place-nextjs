@@ -10,6 +10,7 @@ interface ProductCardProps {
   onAddToCart?: (id: string) => void;
   onAddToWishlist?: (id: string) => void;
   onQuickView?: (id: string) => void;
+  onRemove?: (id: string) => void;
 }
 
 export default function ProductCard({
@@ -17,6 +18,7 @@ export default function ProductCard({
   onAddToCart,
   onAddToWishlist,
   onQuickView,
+  onRemove,
 }: ProductCardProps) {
   const {
     id,
@@ -51,24 +53,40 @@ export default function ProductCard({
         )}
 
         {/* Action Buttons */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2">
-          {/* Wishlist Button */}
-          <button
-            onClick={() => onAddToWishlist?.(id)}
-            className="w-[34px] h-[34px] bg-white rounded-full flex items-center justify-center"
-          >
-            <Image
-              src="/icons/wishlist-icon.svg"
-              alt="Add to wishlist"
-              width={16}
-              height={14}
-            />
-          </button>
 
+        <div className="absolute top-3 right-3 flex flex-col gap-2">
+          {/* Remove Button */}
+          {onRemove && (
+            <button
+              onClick={() => onRemove?.(id)}
+              className="w-[34px] h-[34px] bg-white rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all duration-200"
+            >
+              <Image
+                src="/icons/trash-icon.svg"
+                alt="Remove"
+                width={24}
+                height={24}
+              />
+            </button>
+          )}
+          {/* Wishlist Button */}
+          {onAddToWishlist && (
+            <button
+              onClick={() => onAddToWishlist?.(id)}
+              className="w-[34px] h-[34px] bg-white rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all duration-200"
+            >
+              <Image
+                src="/icons/wishlist-icon.svg"
+                alt="Add to wishlist"
+                width={16}
+                height={14}
+              />
+            </button>
+          )}
           {/* Quick View Button */}
           <button
             onClick={() => onQuickView?.(id)}
-            className="w-[34px] h-[34px] bg-white rounded-full flex items-center justify-center"
+            className="w-[34px] h-[34px] bg-white rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-all duration-200"
           >
             <Image
               src="/icons/eye-icon.svg"
