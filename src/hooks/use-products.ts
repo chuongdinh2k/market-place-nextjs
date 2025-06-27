@@ -5,7 +5,7 @@ import { fetcher } from "@/lib/utils/fetcher";
 export interface Product {
   id: string;
   name: string;
-  description: string | null;
+  description: string | null | undefined;
   price: number;
   image?: string;
   originalPrice?: number;

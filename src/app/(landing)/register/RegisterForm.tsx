@@ -73,7 +73,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-sm">
+    <div className="mx-auto w-full max-w-md space-y-6 p-6 bg-white rounded-lg shadow-sm text-black">
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Create an Account</h1>
         <p className="text-gray-500">
@@ -97,7 +97,11 @@ export default function RegisterForm() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setName(e.target.value)
             }
-            className={hasError("name") ? "border-red-500" : ""}
+            className={
+              hasError("name")
+                ? "border-red-500"
+                : "border-inherit bg-white text-black"
+            }
           />
           {getFieldError("name") && (
             <ErrorMessage message={getFieldError("name") || ""} />
@@ -114,7 +118,11 @@ export default function RegisterForm() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setEmail(e.target.value)
             }
-            className={hasError("email") ? "border-red-500" : ""}
+            className={
+              hasError("name")
+                ? "border-red-500"
+                : "border-inherit bg-white text-black"
+            }
           />
           {getFieldError("email") && (
             <ErrorMessage message={getFieldError("email") || ""} />
@@ -131,7 +139,11 @@ export default function RegisterForm() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setPassword(e.target.value)
             }
-            className={hasError("password") ? "border-red-500" : ""}
+            className={
+              hasError("name")
+                ? "border-red-500"
+                : "border-inherit bg-white text-black"
+            }
           />
           {getFieldError("password") && (
             <ErrorMessage message={getFieldError("password") || ""} />
@@ -148,15 +160,25 @@ export default function RegisterForm() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setConfirmPassword(e.target.value)
             }
-            className={hasError("confirmPassword") ? "border-red-500" : ""}
+            className={
+              hasError("name")
+                ? "border-red-500"
+                : "border-inherit bg-white text-black"
+            }
           />
           {getFieldError("confirmPassword") && (
             <ErrorMessage message={getFieldError("confirmPassword") || ""} />
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Creating Account..." : "Register"}
+        <Button
+          type="submit"
+          className="w-full border-1 border-red-500 text-red-500"
+          disabled={isLoading}
+        >
+          <p className="text-red-500">
+            {isLoading ? "Creating Account..." : "Register"}
+          </p>
         </Button>
       </form>
 

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { ErrorMessage } from "./ui/error-message";
 import { ErrorBoundary } from "./error-boundary";
 import { useWishlist } from "@/hooks/use-wishlist";
+import { useCart } from "@/hooks/use-cart";
 
 export default function ProductList() {
   return (
@@ -20,6 +21,7 @@ export default function ProductList() {
 function ProductListContent() {
   const { products, isLoading, hasError, error, mutate } = useProducts();
   const { addToWishlist } = useWishlist();
+  const { addToCart } = useCart();
   const router = useRouter();
 
   const onQuickView = (id: string) => {
@@ -28,6 +30,11 @@ function ProductListContent() {
 
   const onAddToWishlist = (id: string) => {
     addToWishlist(id);
+    mutate();
+  };
+
+  const onAddToCart = (id: string) => {
+    addToCart(id);
     mutate();
   };
 
@@ -82,6 +89,7 @@ function ProductListContent() {
           product={product}
           onQuickView={onQuickView}
           onAddToWishlist={onAddToWishlist}
+          onAddToCart={onAddToCart}
         />
       ))}
     </div>

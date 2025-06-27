@@ -1,4 +1,5 @@
 import { PrismaClient } from "../src/generated/prisma";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -11,199 +12,92 @@ async function main() {
   await prisma.product.deleteMany();
   await prisma.user.deleteMany();
 
-  // Create users
-  const adminUser = await prisma.user.create({
-    data: {
-      name: "Admin User",
-      email: "admin@example.com",
-      password: "$2a$10$GmQzRpkfkPpSQeB.hv.xHOO9Ld5GMaDB5Kh.3XeRHO9EgWR6jJUYW", // password123
-      role: "ADMIN",
-    },
-  });
+  // Create a test user
+  const hashedPassword = await bcrypt.hash("password123", 10);
 
-  const regularUser = await prisma.user.create({
-    data: {
-      name: "Regular User",
-      email: "user@example.com",
-      password: "$2a$10$GmQzRpkfkPpSQeB.hv.xHOO9Ld5GMaDB5Kh.3XeRHO9EgWR6jJUYW", // password123
+  const user = await prisma.user.upsert({
+    where: { email: "test@example.com" },
+    update: {},
+    create: {
+      email: "test@example.com",
+      name: "Test User",
+      password: hashedPassword,
       role: "USER",
     },
   });
 
-  console.log(`Created users: ${adminUser.name}, ${regularUser.name}`);
+  console.log(`Created user: ${user.name} (${user.email})`);
 
-  // Create products
-  const products = await Promise.all([
-    prisma.product.create({
-      data: {
-        name: "AK-900 Wired Keyboard",
-        description:
-          "High-quality mechanical keyboard with RGB backlighting and premium switches. Perfect for gaming and productivity.",
-        price: 960,
-        originalPrice: 1160,
-        discountPercentage: 35,
-        image: "/images/products/keyboard.jpg",
-        images: ["/images/products/keyboard.jpg"],
-        category: "Electronics",
-        stock: 50,
-        rating: 4,
-        reviewCount: 75,
-      },
-    }),
-    prisma.product.create({
-      data: {
-        name: "IPS LCD Gaming Monitor",
-        description:
-          "24-inch IPS LCD monitor with 144Hz refresh rate, 1ms response time, and HDR support. Perfect for gaming and multimedia.",
-        price: 1160,
-        category: "Electronics",
-        stock: 30,
-        rating: 5,
-        reviewCount: 99,
-        image: "/images/products/keyboard.jpg", // Using placeholder image
-        images: ["/images/products/keyboard.jpg"],
-      },
-    }),
-    prisma.product.create({
-      data: {
-        name: "RGB Liquid CPU Cooler",
-        description:
-          "Advanced liquid cooling solution with RGB lighting, compatible with most modern CPU sockets.",
-        price: 160,
-        originalPrice: 170,
-        discountPercentage: 5,
-        category: "Computer Parts",
-        stock: 45,
-        rating: 3,
-        reviewCount: 65,
-        image: "/images/products/keyboard.jpg", // Using placeholder image
-        images: ["/images/products/keyboard.jpg"],
-      },
-    }),
-    prisma.product.create({
-      data: {
-        name: "GP11 Shooter USB Gamepad",
-        description:
-          "Ergonomic gamepad with USB connection, programmable buttons, and vibration feedback.",
-        price: 660,
-        category: "Gaming",
-        stock: 100,
-        rating: 4,
-        reviewCount: 55,
-        image: "/images/products/keyboard.jpg", // Using placeholder image
-        images: ["/images/products/keyboard.jpg"],
-      },
-    }),
-    prisma.product.create({
-      data: {
-        name: "Havic HV-G92 Gamepad",
-        description:
-          "PlayStation 5 Controller Skin High quality vinyl with air channel adhesive for easy bubble free install & mess free removal Pressure sensitive.",
-        price: 560,
-        originalPrice: 660,
-        discountPercentage: 15,
-        category: "Gaming",
-        stock: 75,
-        rating: 5,
-        reviewCount: 88,
-        image: "/images/products/detail/main-product.jpg",
-        images: [
-          "/images/products/detail/main-product.jpg",
-          "/images/products/detail/thumbnail-1.jpg",
-          "/images/products/detail/thumbnail-2.jpg",
-          "/images/products/detail/thumbnail-3.jpg",
-          "/images/products/detail/thumbnail-4.jpg",
-        ],
-      },
-    }),
-    prisma.product.create({
-      data: {
-        name: "S-Series Comfort Chair",
-        description:
-          "Ergonomic office chair with lumbar support, adjustable height, and breathable mesh back.",
-        price: 375,
-        category: "Furniture",
-        stock: 20,
-        rating: 4,
-        reviewCount: 99,
-        image: "/images/products/keyboard.jpg", // Using placeholder image
-        images: ["/images/products/keyboard.jpg"],
-      },
-    }),
-    prisma.product.create({
-      data: {
-        name: "Modern Sofa",
-        description:
-          "Contemporary sofa with premium upholstery, sturdy frame, and comfortable cushions.",
-        price: 1200,
-        originalPrice: 1500,
-        discountPercentage: 20,
-        category: "Furniture",
-        stock: 15,
-        rating: 5,
-        reviewCount: 150,
-        image: "/images/products/keyboard.jpg", // Using placeholder image
-        images: ["/images/products/keyboard.jpg"],
-      },
-    }),
-    prisma.product.create({
-      data: {
-        name: "Wireless Earbuds",
-        description:
-          "True wireless earbuds with noise cancellation, touch controls, and long battery life.",
-        price: 120,
-        category: "Audio",
-        stock: 200,
-        rating: 3,
-        reviewCount: 45,
-        image: "/images/products/keyboard.jpg", // Using placeholder image
-        images: ["/images/products/keyboard.jpg"],
-      },
-    }),
-  ]);
-
-  console.log(`Created ${products.length} products`);
-
-  // Create cart items
-  await prisma.cartItem.create({
-    data: {
-      userId: regularUser.id,
-      productId: products[0].id,
-      quantity: 2,
+  // Create test products
+  const products = [
+    {
+      name: "LCD Monitor",
+      description: "27-inch 4K LCD Monitor with HDR support",
+      price: 650,
+      originalPrice: 700,
+      discountPercentage: 7,
+      images: ["/images/products/detail/main-product.jpg"],
+      image: "/images/products/detail/main-product.jpg",
+      category: "Electronics",
+      stock: 15,
+      rating: 4.5,
+      reviewCount: 120,
     },
-  });
-
-  console.log(`Created cart item for ${regularUser.name}`);
-
-  // Create wishlist items
-  await prisma.wishlistItem.create({
-    data: {
-      userId: regularUser.id,
-      productId: products[1].id,
+    {
+      name: "H1 Gamepad",
+      description: "Wireless gaming controller with haptic feedback",
+      price: 550,
+      originalPrice: 600,
+      discountPercentage: 8,
+      images: ["/images/products/keyboard.jpg"],
+      image: "/images/products/keyboard.jpg",
+      category: "Gaming",
+      stock: 25,
+      rating: 4.8,
+      reviewCount: 85,
     },
-  });
+    {
+      name: "Mechanical Keyboard",
+      description: "RGB Mechanical Gaming Keyboard with Cherry MX switches",
+      price: 150,
+      originalPrice: 180,
+      discountPercentage: 17,
+      images: ["/images/products/keyboard.jpg"],
+      image: "/images/products/keyboard.jpg",
+      category: "Gaming",
+      stock: 30,
+      rating: 4.7,
+      reviewCount: 64,
+    },
+    {
+      name: "Wireless Mouse",
+      description: "Ergonomic wireless mouse with long battery life",
+      price: 75,
+      originalPrice: 90,
+      discountPercentage: 17,
+      images: ["/images/products/keyboard.jpg"],
+      image: "/images/products/keyboard.jpg",
+      category: "Electronics",
+      stock: 45,
+      rating: 4.3,
+      reviewCount: 38,
+    },
+  ];
 
-  console.log(`Created wishlist item for ${regularUser.name}`);
-
-  // Create an order
-  await prisma.order.create({
-    data: {
-      userId: regularUser.id,
-      status: "DELIVERED",
-      total: 1920, // 2 * 960
-      orderItems: {
-        create: [
-          {
-            productId: products[0].id,
-            quantity: 2,
-            price: 960,
-          },
-        ],
+  for (const product of products) {
+    const createdProduct = await prisma.product.upsert({
+      where: { id: product.name.toLowerCase().replace(/\s+/g, "-") },
+      update: product,
+      create: {
+        id: product.name.toLowerCase().replace(/\s+/g, "-"),
+        ...product,
       },
-    },
-  });
+    });
 
-  console.log(`Created order for ${regularUser.name}`);
+    console.log(`Created product: ${createdProduct.name}`);
+  }
+
+  console.log(`Seeding completed successfully!`);
 }
 
 main()

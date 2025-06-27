@@ -72,7 +72,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const type = props.type ?? "button";
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, loading, className }))}
+        className={cn(
+          buttonVariants({ variant, size, loading, className }),
+          "cursor-pointer"
+        )}
         ref={ref}
         type={type}
         disabled={loading || props.disabled}

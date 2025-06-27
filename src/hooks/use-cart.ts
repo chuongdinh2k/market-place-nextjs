@@ -1,9 +1,14 @@
-"use client";
-
-import { useState } from "react";
 import useSWR from "swr";
-import { fetcher } from "@/lib/utils/fetcher";
+import { useState } from "react";
 import { Product } from "./use-products";
+import {
+  addToCart,
+  removeFromCart,
+  updateCartItemQuantity,
+  clearCart,
+  getCartItems,
+} from "@/actions/cart";
+import { useAuth } from "./use-auth";
 
 export interface CartItem {
   id: string;
@@ -13,34 +18,32 @@ export interface CartItem {
 }
 
 export function useCart() {
+  const { user } = useAuth();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isRemovingFromCart, setIsRemovingFromCart] = useState(false);
 
+  const fetchCartItems = async () => {
+    if (!user?.id) return [];
+    const result = await getCartItems(user.id);
+    console.log("result", result);
+    if (result.success) return result.data;
+    throw new Error(result.error);
+  };
+
+  // Use SWR with the server action directly
   const {
     data: cartItems,
     error,
     isLoading,
     mutate,
-  } = useSWR<CartItem[]>("/api/cart", fetcher);
-  console.log("cartItems", cartItems);
-  // Add item to cart
-  const addToCart = async (productId: string, quantity: number = 1) => {
+  } = useSWR(user?.id ? ["cart-items", user.id] : null, fetchCartItems);
+
+  // Add item to cart using server action
+  const addItem = async (productId: string, quantity: number = 1) => {
     try {
       setIsAddingToCart(true);
-      const response = await fetch("/api/cart", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ productId, quantity }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to add item to cart");
-      }
-
-      // Revalidate cart data
-      await mutate();
+      await addToCart(productId, quantity);
+      await mutate(); // Revalidate cart data
       return true;
     } catch (error) {
       console.error("Error adding to cart:", error);
@@ -50,20 +53,12 @@ export function useCart() {
     }
   };
 
-  // Remove item from cart
-  const removeFromCart = async (itemId: string) => {
+  // Remove item from cart using server action
+  const removeItem = async (productId: string) => {
     try {
       setIsRemovingFromCart(true);
-      const response = await fetch(`/api/cart/${itemId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to remove item from cart");
-      }
-
-      // Revalidate cart data
-      await mutate();
+      await removeFromCart(productId);
+      await mutate(); // Revalidate cart data
       return true;
     } catch (error) {
       console.error("Error removing from cart:", error);
@@ -73,26 +68,26 @@ export function useCart() {
     }
   };
 
-  // Update item quantity
-  const updateQuantity = async (itemId: string, quantity: number) => {
+  // Update item quantity using server action
+  const updateQuantity = async (productId: string, quantity: number) => {
     try {
-      const response = await fetch(`/api/cart/${itemId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ quantity }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update quantity");
-      }
-
-      // Revalidate cart data
-      await mutate();
+      await updateCartItemQuantity(productId, quantity);
+      await mutate(); // Revalidate cart data
       return true;
     } catch (error) {
       console.error("Error updating quantity:", error);
+      return false;
+    }
+  };
+
+  // Clear cart using server action
+  const emptyCart = async () => {
+    try {
+      await clearCart();
+      await mutate([]); // Clear local data
+      return true;
+    } catch (error) {
+      console.error("Error clearing cart:", error);
       return false;
     }
   };
@@ -117,9 +112,10 @@ export function useCart() {
     isRemovingFromCart,
     totalPrice,
     totalItems,
-    addToCart,
-    removeFromCart,
+    addToCart: addItem,
+    removeFromCart: removeItem,
     updateQuantity,
+    clearCart: emptyCart,
     mutate,
   };
 }

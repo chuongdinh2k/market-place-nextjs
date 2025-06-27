@@ -24,12 +24,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useWishlist } from "@/hooks/use-wishlist";
+import { useCart } from "@/hooks/use-cart";
 
 export default function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
   const { wishlistItems } = useWishlist();
+  const { cartItems } = useCart();
+  console.log("cartItems", cartItems);
   const isActive = (path: string) => pathname === path;
 
   const navItems = [
@@ -127,7 +130,7 @@ export default function Header() {
                   variant="destructive"
                   className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
                 >
-                  {wishlistItems?.length}
+                  {wishlistItems?.length || 0}
                 </Badge>
               )}
             </div>
@@ -150,7 +153,7 @@ export default function Header() {
                 variant="destructive"
                 className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
               >
-                3
+                {cartItems?.length || 0}
               </Badge>
             </div>
           </Link>
@@ -320,7 +323,7 @@ export default function Header() {
                           variant="secondary"
                           className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
                         >
-                          5
+                          {wishlistItems?.length || 0}
                         </Badge>
                       </div>
                       <span className="text-[16px] font-poppins">Wishlist</span>
@@ -343,7 +346,7 @@ export default function Header() {
                           variant="destructive"
                           className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs font-bold"
                         >
-                          3
+                          {cartItems?.length || 0}
                         </Badge>
                       </div>
                       <span className="text-[16px] font-poppins">Cart</span>

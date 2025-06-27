@@ -84,7 +84,11 @@ export default function LoginForm() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setEmail(e.target.value)
             }
-            className={hasError("email") ? "border-red-500" : ""}
+            className={
+              hasError("password")
+                ? "border-red-500"
+                : "border-inherit bg-white text-black"
+            }
           />
           {getFieldError("email") && (
             <ErrorMessage message={getFieldError("email") || ""} />
@@ -99,23 +103,34 @@ export default function LoginForm() {
             id="password"
             type="password"
             placeholder="••••••••"
+            autoComplete="off"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setPassword(e.target.value)
             }
-            className={hasError("password") ? "border-red-500" : ""}
+            className={
+              hasError("password")
+                ? "border-red-500"
+                : "border-inherit bg-white text-black"
+            }
           />
           {getFieldError("password") && (
             <ErrorMessage message={getFieldError("password") || ""} />
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Logging in..." : "Login"}
+        <Button
+          type="submit"
+          className="w-full border-1 border-red-500 text-red-500"
+          disabled={isLoading}
+        >
+          <p className="text-red-500">
+            {isLoading ? "Logging in..." : "Login"}
+          </p>
         </Button>
       </form>
 
-      <div className="mt-4 text-center text-sm">
+      <div className="mt-4 text-center text-sm text-black">
         <p>
           Don&apos;t have an account?{" "}
           <a href="/register" className="text-blue-600 hover:underline">
