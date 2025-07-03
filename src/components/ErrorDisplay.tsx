@@ -21,13 +21,6 @@ export function ErrorDisplay(props: {
     return (
       <NotFound>
         <p>There was an error.</p>
-        {/* <p>
-          Please refresh or contact support at{" "}
-          <a href={`mailto:${env.NEXT_PUBLIC_SUPPORT_EMAIL}`}>
-            {env.NEXT_PUBLIC_SUPPORT_EMAIL}
-          </a>{" "}
-          if the error persists.
-        </p> */}
       </NotFound>
     );
   }

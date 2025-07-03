@@ -1,10 +1,11 @@
-import { getCurrentUser } from "@/actions/auth";
+"use client";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 
-export default async function ProfilePage() {
+export default function ProfilePage() {
   // Get the current user
-  const user = await getCurrentUser();
+  const { user } = useAuth();
 
   // If the user is not authenticated, redirect to login
   if (!user) {

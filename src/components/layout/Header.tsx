@@ -32,7 +32,6 @@ export default function Header() {
   const { user, isAuthenticated, logout } = useAuth();
   const { wishlistItems } = useWishlist();
   const { cartItems } = useCart();
-  console.log("cartItems", cartItems);
   const isActive = (path: string) => pathname === path;
 
   const navItems = [
@@ -208,7 +207,7 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <Link href="/sign-up">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-black">
                 Sign In
               </Button>
             </Link>

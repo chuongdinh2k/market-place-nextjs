@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 // Define which routes require authentication
-const protectedRoutes = ["/dashboard", "/wishlist", "/orders", "/profile"];
+const protectedRoutes = [
+  "/dashboard",
+  "/wishlist",
+  "/orders",
+  "/profile",
+  "/cart",
+];
 
 // Define which routes require admin role
 const adminRoutes = ["/dashboard", "/admin"];
@@ -25,7 +31,6 @@ export async function middleware(request: NextRequest) {
 
   // Get the token from the cookie
   const token = request.cookies.get("auth_token")?.value;
-  console.log("token", token);
 
   // If there is no token, redirect to login
   if (!token) {
@@ -73,5 +78,6 @@ export const config = {
     "/orders/:path*",
     "/profile/:path*",
     "/admin/:path*",
+    "/cart/:path*",
   ],
 };

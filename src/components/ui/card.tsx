@@ -94,7 +94,7 @@ CardBasic.displayName = "CardBasic";
 const CardGreen = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }) => (
   <Card
     className={cn(
       "border-green-100 bg-gradient-to-tr from-transparent via-green-50/80 to-green-500/15 dark:border-green-900 dark:from-green-950/50 dark:via-green-900/20 dark:to-green-800/10",

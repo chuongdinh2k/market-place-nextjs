@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFormError } from "@/hooks/use-form-error";
 import { ErrorMessage } from "@/components/ui/error-message";
-import { login } from "@/actions/auth";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,9 +15,9 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const { addError, clearErrors, hasError, getFieldError, getGeneralErrors } =
     useFormError();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,17 +37,15 @@ export default function LoginForm() {
     try {
       setIsLoading(true);
 
-      // Call the login server action
-      const result = await login({ email, password });
+      // Call the login function from useAuth hook with callbackUrl
+      const result = await login({ email, password }, callbackUrl);
 
       if (!result.success) {
         addError(result.error || "Login failed");
         return;
       }
 
-      // Redirect on successful login
-      router.push(callbackUrl);
-      router.refresh(); // Refresh the page to update the UI
+      // Navigation is handled in the login function
     } catch (error) {
       addError(
         error instanceof Error ? error.message : "An unexpected error occurred"

@@ -1,7 +1,6 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { z } from "zod";
@@ -209,7 +208,6 @@ export async function register(
  */
 export async function logout() {
   (await cookies()).delete(COOKIE_NAME);
-  redirect("/");
 }
 
 /**
@@ -218,7 +216,6 @@ export async function logout() {
 export async function getCurrentUser() {
   try {
     const token = (await cookies()).get(COOKIE_NAME)?.value;
-
     if (!token) {
       return null;
     }

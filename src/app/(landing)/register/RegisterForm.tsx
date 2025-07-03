@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFormError } from "@/hooks/use-form-error";
 import { ErrorMessage } from "@/components/ui/error-message";
-import { register } from "@/actions/auth";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +17,9 @@ export default function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const { addError, clearErrors, hasError, getFieldError, getGeneralErrors } =
     useFormError();
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,17 +54,15 @@ export default function RegisterForm() {
     try {
       setIsLoading(true);
 
-      // Call the register server action
-      const result = await register({ name, email, password });
+      // Call the register function from useAuth hook with callbackUrl
+      const result = await register({ name, email, password }, callbackUrl);
 
       if (!result.success) {
         addError(result.error || "Registration failed");
         return;
       }
 
-      // Redirect on successful registration
-      router.push("/");
-      router.refresh(); // Refresh the page to update the UI
+      // Navigation is handled in the register function
     } catch (error) {
       addError(
         error instanceof Error ? error.message : "An unexpected error occurred"

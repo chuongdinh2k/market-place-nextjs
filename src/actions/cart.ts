@@ -1,12 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/actions/auth";
 
-// Helper function to get user ID (if logged in) or generate a guest ID from cookies
+// Helper function to get user ID (if logged in)
 async function getUserIdentifier() {
   // Try to get the current user from auth
   const user = await getCurrentUser();
@@ -16,21 +15,8 @@ async function getUserIdentifier() {
     return { userId: user.id, isGuest: false };
   }
 
-  // Otherwise, use a cookie to track guest cart
-  const cookieStore = cookies();
-  let guestId = (await cookieStore).get("guestId")?.value;
-
-  if (!guestId) {
-    guestId = `guest_${Math.random().toString(36).substring(2, 15)}`;
-    (await cookieStore).set("guestId", guestId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      path: "/",
-    });
-  }
-
-  return { userId: guestId, isGuest: true };
+  // If no user is logged in, return null
+  return { userId: null, isGuest: true };
 }
 
 // Get cart items
@@ -71,10 +57,9 @@ export async function getCartItems(userId: string) {
 export async function addToCart(productId: string, quantity: number = 1) {
   const { userId, isGuest } = await getUserIdentifier();
 
-  // For guest users (implement guest cart logic if needed)
-  if (isGuest) {
-    // For now, we'll just return success without storing
-    return { success: true };
+  // For guest users, return an error
+  if (isGuest || !userId) {
+    return { success: false, error: "User not authenticated" };
   }
 
   try {
@@ -130,9 +115,9 @@ export async function addToCart(productId: string, quantity: number = 1) {
 export async function removeFromCart(productId: string) {
   const { userId, isGuest } = await getUserIdentifier();
 
-  // For guest users
-  if (isGuest) {
-    return { success: true };
+  // For guest users, return an error
+  if (isGuest || !userId) {
+    return { success: false, error: "User not authenticated" };
   }
 
   try {
@@ -176,9 +161,9 @@ export async function updateCartItemQuantity(
 
   const { userId, isGuest } = await getUserIdentifier();
 
-  // For guest users
-  if (isGuest) {
-    return { success: true };
+  // For guest users, return an error
+  if (isGuest || !userId) {
+    return { success: false, error: "User not authenticated" };
   }
 
   try {
@@ -218,9 +203,9 @@ export async function updateCartItemQuantity(
 export async function clearCart() {
   const { userId, isGuest } = await getUserIdentifier();
 
-  // For guest users
-  if (isGuest) {
-    return { success: true };
+  // For guest users, return an error
+  if (isGuest || !userId) {
+    return { success: false, error: "User not authenticated" };
   }
 
   try {
@@ -244,9 +229,9 @@ export async function checkout() {
   const { userId, isGuest } = await getUserIdentifier();
 
   // Guest users can't checkout (they should sign in first)
-  if (isGuest) {
+  if (isGuest || !userId) {
     // Redirect to login page
-    redirect("/sign-up?redirect=/cart");
+    redirect("/sign-up?callbackUrl=/cart");
   }
 
   try {

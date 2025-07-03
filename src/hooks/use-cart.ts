@@ -1,5 +1,6 @@
 import useSWR from "swr";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Product } from "./use-products";
 import {
   addToCart,
@@ -19,6 +20,7 @@ export interface CartItem {
 
 export function useCart() {
   const { user } = useAuth();
+  const router = useRouter();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isRemovingFromCart, setIsRemovingFromCart] = useState(false);
 
@@ -42,7 +44,29 @@ export function useCart() {
   const addItem = async (productId: string, quantity: number = 1) => {
     try {
       setIsAddingToCart(true);
-      await addToCart(productId, quantity);
+
+      // Check if user is logged in
+      if (!user?.id) {
+        // Get current URL to use as callback after login
+        const currentPath = window.location.pathname;
+        // Redirect to sign-up with callback URL
+        router.push(`/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`);
+        return false;
+      }
+
+      const result = await addToCart(productId, quantity);
+
+      if (!result.success) {
+        // If the error is due to authentication, redirect to login
+        if (result.error === "User not authenticated") {
+          const currentPath = window.location.pathname;
+          router.push(
+            `/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`
+          );
+        }
+        return false;
+      }
+
       await mutate(); // Revalidate cart data
       return true;
     } catch (error) {
@@ -57,7 +81,29 @@ export function useCart() {
   const removeItem = async (productId: string) => {
     try {
       setIsRemovingFromCart(true);
-      await removeFromCart(productId);
+
+      // Check if user is logged in
+      if (!user?.id) {
+        // Get current URL to use as callback after login
+        const currentPath = window.location.pathname;
+        // Redirect to sign-up with callback URL
+        router.push(`/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`);
+        return false;
+      }
+
+      const result = await removeFromCart(productId);
+
+      if (!result.success) {
+        // If the error is due to authentication, redirect to login
+        if (result.error === "User not authenticated") {
+          const currentPath = window.location.pathname;
+          router.push(
+            `/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`
+          );
+        }
+        return false;
+      }
+
       await mutate(); // Revalidate cart data
       return true;
     } catch (error) {
@@ -71,7 +117,28 @@ export function useCart() {
   // Update item quantity using server action
   const updateQuantity = async (productId: string, quantity: number) => {
     try {
-      await updateCartItemQuantity(productId, quantity);
+      // Check if user is logged in
+      if (!user?.id) {
+        // Get current URL to use as callback after login
+        const currentPath = window.location.pathname;
+        // Redirect to sign-up with callback URL
+        router.push(`/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`);
+        return false;
+      }
+
+      const result = await updateCartItemQuantity(productId, quantity);
+
+      if (!result.success) {
+        // If the error is due to authentication, redirect to login
+        if (result.error === "User not authenticated") {
+          const currentPath = window.location.pathname;
+          router.push(
+            `/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`
+          );
+        }
+        return false;
+      }
+
       await mutate(); // Revalidate cart data
       return true;
     } catch (error) {
@@ -83,7 +150,28 @@ export function useCart() {
   // Clear cart using server action
   const emptyCart = async () => {
     try {
-      await clearCart();
+      // Check if user is logged in
+      if (!user?.id) {
+        // Get current URL to use as callback after login
+        const currentPath = window.location.pathname;
+        // Redirect to sign-up with callback URL
+        router.push(`/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`);
+        return false;
+      }
+
+      const result = await clearCart();
+
+      if (!result.success) {
+        // If the error is due to authentication, redirect to login
+        if (result.error === "User not authenticated") {
+          const currentPath = window.location.pathname;
+          router.push(
+            `/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`
+          );
+        }
+        return false;
+      }
+
       await mutate([]); // Clear local data
       return true;
     } catch (error) {

@@ -1,6 +1,7 @@
 "use client";
 
 import useSWR from "swr";
+import { useRouter } from "next/navigation";
 import {
   getWishlist,
   addToWishlist,
@@ -17,6 +18,7 @@ export interface WishlistItem {
 
 export function useWishlist() {
   const { user } = useAuth(); // Get userId from auth context/session
+  const router = useRouter();
 
   // SWR fetcher using server action
   const fetchWishlist = async () => {
@@ -35,24 +37,51 @@ export function useWishlist() {
 
   // Add item to wishlist
   const handleAddToWishlist = async (productId: string) => {
-    console.log("productId", productId);
-    if (!user?.id) return false;
+    if (!user?.id) {
+      // Get current URL to use as callback after login
+      const currentPath = window.location.pathname;
+      // Redirect to sign-up with callback URL
+      router.push(`/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`);
+      return false;
+    }
+
     const result = await addToWishlist(productId, user.id);
     if (result.success) {
       await mutate();
       return true;
     }
+
+    // If the error is due to authentication, redirect to login
+    if (result.error === "User not authenticated") {
+      const currentPath = window.location.pathname;
+      router.push(`/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`);
+    }
+
     return false;
   };
 
   // Remove item from wishlist
   const handleRemoveFromWishlist = async (productId: string) => {
-    if (!user?.id) return false;
+    if (!user?.id) {
+      // Get current URL to use as callback after login
+      const currentPath = window.location.pathname;
+      // Redirect to sign-up with callback URL
+      router.push(`/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`);
+      return false;
+    }
+
     const result = await removeFromWishlist(productId, user.id);
     if (result.success) {
       await mutate();
       return true;
     }
+
+    // If the error is due to authentication, redirect to login
+    if (result.error === "User not authenticated") {
+      const currentPath = window.location.pathname;
+      router.push(`/sign-up?callbackUrl=${encodeURIComponent(currentPath)}`);
+    }
+
     return false;
   };
 

@@ -1,3 +1,4 @@
+// Example for /api/auth/me route
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/actions/auth";
 
@@ -11,9 +12,9 @@ export async function GET() {
 
     return NextResponse.json(user);
   } catch (error) {
-    console.error("Error in /api/auth/me:", error);
+    console.error("Auth API error:", error);
     return NextResponse.json(
-      { error: "Authentication error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
